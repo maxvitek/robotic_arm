@@ -1,6 +1,10 @@
 import pyfirmata
 import math
 import os
+import time
+import logging
+logging.basicConfig()
+logger = logging.getLogger()
 
 
 class Board(object):
@@ -48,7 +52,7 @@ class Arm(object):
 
         self.starting_position()
 
-    def exit(self)
+    def exit(self):
         self.board.stop()
 
     def move(self, x, y, z, g, wa, wr, test=False):
@@ -67,7 +71,7 @@ class Arm(object):
         # inverse kinematics
         shoulder_wrist_line = math.sqrt(wrist_x**2 + wrist_y**2)
         if shoulder_wrist_line > self.HUMERUS + self.ULNA:
-            print 'impossible range'
+            logger.error('impossible range')
             return False
         #print 'sw line: ', shoulder_wrist_line
 
@@ -85,13 +89,13 @@ class Arm(object):
         wrist_position = 90 + wa - elbow_angle - shoulder_angle
 
         if test:
-            print('Arm positions calculated:')
-            print('----->base: ' + str(z))
-            print('----->shoulder: ' + str(shoulder_position))
-            print('----->elbow: ' + str(elbow_position))
-            print('----->wrist: ' + str(wrist_position))
-            print('---------->rotation: ' + str(wr))
-            print('---------->gripper: ' + str(g))
+            logger.debug('Arm positions calculated:')
+            logger.debug('----->base: ' + str(z))
+            logger.debug('----->shoulder: ' + str(shoulder_position))
+            logger.debug('----->elbow: ' + str(elbow_position))
+            logger.debug('----->wrist: ' + str(wrist_position))
+            logger.debug('---------->rotation: ' + str(wr))
+            logger.debug('---------->gripper: ' + str(g))
             return True
 
         self.elbow.write(elbow_position)
@@ -111,16 +115,41 @@ class Arm(object):
         inch_increment = 0.1
         angle_increment = 1
 
-        steps = max((x - xo) / inch_increment,
-                    (y - yo) / inch_increment,
-                    (z - zo) / angle_increment,
-                    (g - go) / angle_increment,
-                    (wa - wao) / angle_increment,
-                    (wr - wro) / angle_increment)
+        steps = int(max(abs(x - xo) / inch_increment,
+                    abs(y - yo) / inch_increment,
+                    abs(z - zo) / angle_increment,
+                    abs(g - go) / angle_increment,
+                    abs(wa - wao) / angle_increment,
+                    abs(wr - wro) / angle_increment)) + 1
+
+        logger.debug('steps computed: ' + str(steps))
+
+        # start by setting equal to existing position
+        xn = xo
+        yn = yo
+        zn = zo
+        gn = go
+        wan = wao
+        wrn = wro
 
         for step in range(steps):
-            # left off here
-            pass
+            if xn != x:
+                xn += max(min(x - xn, inch_increment), -inch_increment)
+            if yn != y:
+                yn += max(min(y - yn, inch_increment), -inch_increment)
+            if zn != z:
+                zn += max(min(z - zn, angle_increment), -angle_increment)
+            if gn != g:
+                gn += max(min(g - gn, angle_increment), -angle_increment)
+            if wan != wa:
+                wan += max(min(wa - wan, angle_increment), -angle_increment)
+            if wrn != wr:
+                wrn += max(min(wr - wrn, angle_increment), -angle_increment)
+            logger.debug('step ' + str(step) + ': ' + str((xn, yn, zn, gn, wan, wrn)))
+            self.move(xn, yn, zn, gn, wan, wrn)
+            time.sleep(.01)
+
+        return True
 
     def gui(self):
         from Tkinter import Tk, Scale, HORIZONTAL
