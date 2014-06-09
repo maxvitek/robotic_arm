@@ -158,44 +158,50 @@ class Arm(object):
     def gui(self):
         from Tkinter import Tk, Scale, HORIZONTAL
         root = Tk()
-        x = Scale(root, from_=0, to=self.HUMERUS + self.ULN + 2, resolution=0.1,
+        x = Scale(root, from_=0, to=self.HUMERUS + self.ULNA + 2, resolution=0.1,
                 orient = HORIZONTAL, length = 400,
-                command=lambda i: self.move(float(i), y.get(), z.get(), g.get(), wa.get(), wr.get())
+                command=lambda i: self.dump_target_position(
+                    float(i), y.get(), z.get(), g.get(), wa.get(), wr.get())
                 )
         x.pack()
         x.set(8)
         
         y = Scale(root, from_=0, to=self.HUMERUS + self.ULNA + 2, resolution=0.1,
                 orient = HORIZONTAL, length = 400,
-                command=lambda i: self.move(x.get(), float(i), z.get(), g.get(), wa.get(), wr.get())
+                command=lambda i: self.dump_target_position(
+                    x.get(), float(i), z.get(), g.get(), wa.get(), wr.get())
                 )
         y.pack()
         y.set(6)
         
         z = Scale(root, from_=0, to=175,
                 orient = HORIZONTAL, length = 400,
-                command=lambda i: self.move(x.get(), y.get(), float(i), g.get(), wa.get(), wr.get())
+                command=lambda i: self.dump_target_position(
+                    x.get(), y.get(), float(i), g.get(), wa.get(), wr.get())
                 )
         z.pack()
         z.set(90)
         
         g = Scale(root, from_=0, to=175,
                 orient = HORIZONTAL, length = 400,
-                command=lambda i: self.move(x.get(), y.get(), z.get(), float(i), wa.get(), wr.get())
+                command=lambda i: self.dump_target_position(
+                    x.get(), y.get(), z.get(), float(i), wa.get(), wr.get())
                 )
         g.pack()
         g.set(90)
         
         wa = Scale(root, from_=-85, to=85,
                 orient = HORIZONTAL, length = 400,
-                command=lambda i: self.move(x.get(), y.get(), z.get(), g.get(), float(i), wr.get())
+                command=lambda i: self.dump_target_position(
+                    x.get(), y.get(), z.get(), g.get(), float(i), wr.get())
                 )
         wa.pack()
         wa.set(0)
         
         wr = Scale(root, from_=0, to=175,
                 orient = HORIZONTAL, length = 400,
-                command=lambda i: self.move(x.get(), y.get(), z.get(), g.get(), wa.get(), float(i))
+                command=lambda i: self.dump_target_position(
+                    x.get(), y.get(), z.get(), g.get(), wa.get(), float(i))
                 )
         wr.pack()
         wr.set(90)
