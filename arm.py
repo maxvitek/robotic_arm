@@ -4,6 +4,7 @@ import os
 import time
 import logging
 import json
+import subprocess
 logging.basicConfig()
 logger = logging.getLogger()
 
@@ -41,6 +42,7 @@ class Arm(object):
         self.HAND = 5.00
         self.BASE = 3.25
 
+    def enter(self):
         self.board = Board()
 
         # servos
@@ -204,6 +206,11 @@ class Arm(object):
         with open('/tmp/arm_position', 'w') as f:
             json.dump(self.current_position, f)
 
+    def dump_target_position(self, x, y, z, g, wa, wr):
+        with open('/tmp/new_arm_position', 'w') as f:
+            json.dump((x, y, z, g, wa, wr), f)
+        subprocess.call(['scp', '/tmp/new_arm_position', 'pinode10:/tmp/new_arm_position'])
+
     def fetch_move(self):
         if not os.path.exists('/tmp/new_arm_position'):
             return
@@ -217,6 +224,10 @@ class Arm(object):
             if not os.path.exists('/tmp/new_arm_position'):
                 time.sleep(1)
             else:
-                if self.fetch_move():
-                    os.remove('/tmp/new_arm_position')
+                try:
+                    result = self.fetch_move()
+                    if result:
+                        os.remove('/tmp/new_arm_position')
+                except ValueError:
+                    pass
                 time.sleep(1)
