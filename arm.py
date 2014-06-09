@@ -3,6 +3,7 @@ import math
 import os
 import time
 import logging
+import json
 logging.basicConfig()
 logger = logging.getLogger()
 
@@ -105,6 +106,7 @@ class Arm(object):
         self.wrist_rotate.write(wr)
         self.gripper.write(g)
         self.current_position = (x, y, z, g, wa, wr)
+        self.record_position()
         return True
 
     def starting_position(self):
@@ -197,3 +199,24 @@ class Arm(object):
         wr.set(90)
 
         root.mainloop()
+
+    def record_position(self):
+        with open('/tmp/arm_position', 'w') as f:
+            json.dump(self.current_position, f)
+
+    def fetch_move(self):
+        if not os.path.exists('/tmp/new_arm_position'):
+            return
+        with open('/tmp/new_arm_position', 'r') as f:
+            new_position = tuple(json.load(f))
+            self.smooth_move(*new_position)
+        return True
+
+    def monitor(self):
+        while True:
+            if not os.path.exists('/tmp/new_arm_position'):
+                time.sleep(1)
+            else:
+                if self.fetch_move():
+                    os.remove('/tmp/new_arm_position')
+                time.sleep(1)
